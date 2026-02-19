@@ -265,7 +265,11 @@ app.post('/admin/save-file', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // Start Server
-const HOST = '0.0.0.0';
-app.listen(PORT, HOST, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    const HOST = '0.0.0.0';
+    app.listen(PORT, HOST, () => {
+        console.log(`Server running on http://${HOST}:${PORT}`);
+    });
+}
+
+module.exports = app;
