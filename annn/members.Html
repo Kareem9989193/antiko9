@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antiko Team | أعضاء الفريق</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tree-container {
+            width: 100%;
+            height: 800px;
+            position: relative;
+            margin: 50px 0;
+            overflow: visible;
+        }
+
+        .tree-node {
+            position: absolute;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .tree-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .member-card {
+            background: rgba(10, 5, 5, 0.85);
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 20px;
+            width: 220px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 0, 51, 0.2);
+        }
+
+        .member-avatar {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .tree-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: auto;
+                gap: 30px;
+            }
+
+            .tree-node {
+                position: static !important;
+            }
+
+            .tree-svg {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <a href="index.html" class="back-btn" title="العودة للرئيسية"><i class="fas fa-arrow-right"></i></a>
+
+    <header>
+        <div id="p-title" class="logo-text staggered-entry">شجرة فريق Antiko</div>
+        <div class="hero">
+            <h2 id="p-hero" class="staggered-entry">الهيكلية التنظيمية لنخبة مطورينا</h2>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="tree-container" class="tree-container">
+            <svg id="tree-svg" class="tree-svg"></svg>
+            <!-- Nodes injected here -->
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer-text">© 2026 Antiko Team. All Rights Reserved.</p>
+    </footer>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_bxTVPpSES36UHiaKoqBGBeI54ccwr2c",
+            authDomain: "antiko-cb40b.firebaseapp.com",
+            projectId: "antiko-cb40b",
+            storageBucket: "antiko-cb40b.firebasestorage.app",
+            messagingSenderId: "548565193060",
+            appId: "1:548565193060:web:8089850e62f323c052ea71"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        window.db = db;
+        window.pageID = 'members_page';
+        window.firebaseFirestore = { doc, onSnapshot };
+        window.firebaseAuth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithPopup = signInWithPopup;
+
+        // Fetch Page Settings
+        onSnapshot(doc(db, "site_content", "members_page"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.title) document.getElementById('p-title').innerText = d.title;
+                if (d.hero_text) document.getElementById('p-hero').innerText = d.hero_text;
+            }
+        });
+
+        // Dynamic Tree Rendering
+        onSnapshot(collection(db, "members"), (snapshot) => {
+            const container = document.getElementById('tree-container');
+            const svg = document.getElementById('tree-svg');
+            const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Cleanup
+            container.querySelectorAll('.tree-node').forEach(n => n.remove());
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff0033" />
+                    </marker>
+                </defs>
+            `;
+
+            // Draw Lines
+            members.forEach(m => {
+                if (m.parentId) {
+                    const parent = members.find(p => p.id === m.parentId);
+                    if (parent) {
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", (parent.x || 0) + 110);
+                        line.setAttribute("y1", (parent.y || 0) + 60);
+                        line.setAttribute("x2", (m.x || 0) + 110);
+                        line.setAttribute("y2", (m.y || 0) - 5);
+                        line.setAttribute("stroke", parent.color || "#ff0033");
+                        line.setAttribute("stroke-width", "2");
+                        line.setAttribute("marker-end", "url(#arrowhead)");
+                        line.setAttribute("opacity", "0.6");
+                        svg.appendChild(line);
+                    }
+                }
+            });
+
+            // Render Member Cards
+            members.forEach(m => {
+                const node = document.createElement('div');
+                node.className = 'tree-node staggered-entry';
+                node.style.left = (m.x || 0) + 'px';
+                node.style.top = (m.y || 0) + 'px';
+
+                const cardColor = m.color || "#ff0033";
+
+                node.innerHTML = `
+                    <div class="member-card" style="border-color: ${cardColor}; box-shadow: 0 0 15px ${cardColor}33;">
+                        <div class="member-avatar" style="color: ${cardColor};"><i class="${m.icon || 'fas fa-user'}"></i></div>
+                        <div class="member-name">${m.name}</div>
+                        <div class="member-role" style="color: ${cardColor};">${m.role}</div>
+                        ${m.bio ? `<p class="member-bio">${m.bio}</p>` : ''}
+                        
+                        <div class="member-socials" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+                            ${m.link ? `<a href="${m.link}" target="_blank" style="color:${cardColor}; font-size:1.2rem;"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                            ${m.discord ? `<a href="#" title="${m.discord}" style="color:${cardColor}; font-size:1.2rem;" onclick="event.preventDefault(); alert('Discord ID: ${m.discord}')"><i class="fab fa-discord"></i></a>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(node);
+            });
+        });
+
+        onSnapshot(doc(db, "site_content", "main"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.footer) document.getElementById('footer-text').innerText = d.footer;
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

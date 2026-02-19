@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antiko Team | عن الفريق</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .content-card {
+            background: var(--card-bg);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 50px;
+            margin: 20px auto;
+            border: 1px solid rgba(255, 0, 51, 0.2);
+            text-align: right;
+        }
+
+        .content-card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <a href="index.html" class="back-btn" title="العودة للرئيسية" aria-label="العودة للرئيسية"><i
+            class="fas fa-arrow-right"></i></a>
+
+    <header>
+        <div id="p-title" class="logo-text staggered-entry">عن الفريق</div>
+        <div class="hero">
+            <h2 id="p-hero" class="staggered-entry">تعرف على رؤية وقصة Antiko Team</h2>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="content-card staggered-entry">
+            <h2 id="v-h">رؤيتنا</h2>
+            <p id="v-p">نطمح في فريق Antiko أن نكون الرواد في تقديم حلول برمجية مبتكرة تجمع بين الإبداع الفني والتقنية
+                المتطورة.
+                نحن نؤمن بأن البرمجة ليست مجرد كود، بل هي وسيلة لتحسين حياة الناس وتوفير أدوات ترفيهية وإنتاجية
+                استثنائية.</p>
+        </div>
+
+        <div class="content-card staggered-entry">
+            <h2 id="m-h">مهمتنا</h2>
+            <p id="m-p">مهمتنا هي بناء مجتمع تقني متكامل، وتطوير منصات وأدوات (مثل بوت Antiko) تلبي احتياجات المستخدمين
+                وتفوق
+                توقعاتهم. نحن نركز على الجودة، الاستدامة، وتجربة المستخدم السلسة.</p>
+        </div>
+
+        <div class="content-card staggered-entry">
+            <h2 id="s-h">قصتنا</h2>
+            <p id="s-p">بدأ فريق Antiko كمجموعة صغيرة من المبرمجين الطموحين، وتحول اليوم إلى فريق متكامل يضم مواهب في
+                مختلف
+                المجالات التقنية. نحن مستمرون في النمو والتطوير، وشغفنا هو ما يدفعنا للأمام دائمًا.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer-text">© 2026 Antiko Team. All Rights Reserved.</p>
+    </footer>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_bxTVPpSES36UHiaKoqBGBeI54ccwr2c",
+            authDomain: "antiko-cb40b.firebaseapp.com",
+            projectId: "antiko-cb40b",
+            storageBucket: "antiko-cb40b.firebasestorage.app",
+            messagingSenderId: "548565193060",
+            appId: "1:548565193060:web:8089850e62f323c052ea71"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        window.db = db;
+        window.pageID = 'team_page';
+        window.firebaseFirestore = { doc, onSnapshot };
+        window.firebaseAuth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithPopup = signInWithPopup;
+
+        onSnapshot(doc(db, "site_content", "team_page"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.title) document.getElementById('p-title').innerText = d.title;
+                if (d.hero_text) document.getElementById('p-hero').innerText = d.hero_text;
+                if (d.vision_h) document.getElementById('v-h').innerText = d.vision_h;
+                if (d.vision_p) document.getElementById('v-p').innerText = d.vision_p;
+                if (d.mission_h) document.getElementById('m-h').innerText = d.mission_h;
+                if (d.mission_p) document.getElementById('m-p').innerText = d.mission_p;
+                if (d.story_h) document.getElementById('s-h').innerText = d.story_h;
+                if (d.story_p) document.getElementById('s-p').innerText = d.story_p;
+            }
+        });
+
+        onSnapshot(doc(db, "site_content", "main"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.footer) document.getElementById('footer-text').innerText = d.footer;
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

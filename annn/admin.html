@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antiko Team | Portal Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+        }
+
+        body {
+            background-color: #050505;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        * {
+            font-family: 'Tajawal', sans-serif !important;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(15, 5, 5, 0.95);
+            border-left: 2px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 20px;
+            color: var(--primary);
+            font-family: 'Tajawal', sans-serif;
+            font-weight: bold;
+            font-size: 2rem;
+            border-bottom: 1px solid #222;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            color: #ccc;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.1rem;
+            border-right: 4px solid transparent;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 0, 51, 0.1);
+            color: var(--primary);
+            border-right-color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: radial-gradient(circle at center, #111 0%, #050505 100%);
+        }
+
+        .section {
+            display: none;
+            opacity: 0;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-admin {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #333;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(255, 0, 51, 0.2);
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            display: inline-block;
+            width: fit-content;
+            margin-top: 20px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--primary-glow);
+        }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: #111;
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Visual Tree Builder */
+        .tree-builder-workspace {
+            width: 100%;
+            height: 600px;
+            background: #080808;
+            border: 2px dashed #333;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+            background-image: radial-gradient(#222 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .node-draggable {
+            position: absolute;
+            width: 220px;
+            background: rgba(10, 5, 5, 0.95);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: move;
+            z-index: 10;
+            user-select: none;
+            text-align: center;
+            color: #fff;
+        }
+
+        .node-draggable.active-node {
+            box-shadow: 0 0 15px var(--primary-glow);
+            border-width: 2px;
+        }
+
+        .tree-canvas-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .node-info-panel {
+            background: rgba(20, 20, 20, 0.9);
+            border-left: 1px solid #333;
+            padding: 20px;
+            width: 320px;
+            height: 100%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 20;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .grid-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar-header,
+            .nav-text {
+                display: none;
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 20px 0;
+            }
+        }
+
+        /* File Editor Styles */
+        #editor-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 20000;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        #editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #111;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #editor-header {
+            padding: 15px 20px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #code-textarea {
+            flex-grow: 1;
+            background: #0d0d0d;
+            color: #00ff41;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 20px;
+            font-size: 1rem;
+            resize: none;
+            border: none;
+            line-height: 1.5;
+        }
+
+        .zebra-stripes tr:nth-child(even) {
+            background: rgba(255, 0, 51, 0.05);
+        }
+
+        /* Bot immersive look */
+        .bot-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1
+                style="color: var(--primary); font-family: 'Tajawal', sans-serif; font-size: 2.5rem; margin-bottom: 20px;">
+                ADMIN PORTAL</h1>
+            <div class="form-group" style="text-align: right;">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="admin@gmail.com">
+            </div>
+            <div class="form-group" style="text-align: right;">
+                <label>Password</label>
+                <input type="password" id="login-pass">
+            </div>
+            <button class="btn-save" onclick="doLogin()" style="width: 100%;">ENTER PORTAL</button>
+            <p id="login-status" style="margin-top: 15px;"></p>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            ANTI
+            <div id="server-status-pill"
+                style="font-size: 0.6rem; margin-top: 5px; color: #ff4444; border: 1px solid #ff4444; padding: 2px 8px; border-radius: 10px; width: fit-content; margin-inline: auto;">
+                Server: OFFLINE</div>
+        </div>
+        <div class="nav-item active" onclick="showSection('general')">
+            <i class="fas fa-home"></i> <span class="nav-text">العامة</span>
+        </div>
+        <div class="nav-item" onclick="showSection('cards')">
+            <i class="fas fa-th-large"></i> <span class="nav-text">البطاقات الرئيسية</span>
+        </div>
+        <div class="nav-item" onclick="showSection('bot-page')">
+            <i class="fas fa-robot"></i> <span class="nav-text">صفحة البوت</span>
+        </div>
+        <div class="nav-item" onclick="showSection('team-page')">
+            <i class="fas fa-info-circle"></i> <span class="nav-text">صفحة الفريق</span>
+        </div>
+        <div class="nav-item" onclick="showSection('members-page')">
+            <i class="fas fa-users"></i> <span class="nav-text">صفحة الأعضاء</span>
+        </div>
+        <div class="nav-item" onclick="showSection('shop')">
+            <i class="fas fa-shopping-bag"></i> <span class="nav-text">إدارة المتجر</span>
+        </div>
+        <div class="nav-item" onclick="showSection('files')">
+            <i class="fas fa-file-code"></i> <span class="nav-text">ملفات الموقع</span>
+        </div>
+        <div style="margin-top: auto;">
+            <div class="nav-item" onclick="location.href='index.html'">
+                <i class="fas fa-external-link-alt"></i> <span class="nav-text">زيارة الموقع</span>
+            </div>
+            <div class="nav-item" onclick="doLogout()" style="color: #ff4444;">
+                <i class="fas fa-sign-out-alt"></i> <span class="nav-text">خروج</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+
+        <!-- Section: General -->
+        <div id="section-general" class="section active">
+            <h2 style="color: #fff; margin-bottom: 30px;">إعدادات الموقع العامة</h2>
+
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-id-card"></i> الهوية والبصمة</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>اسم الموقع (Logo Text)</label><input type="text" id="logo_text">
+                    </div>
+                    <div class="form-group"><label>نص الحقوق (Footer Text)</label><input type="text" id="footer_text">
+                    </div>
+                    <div class="form-group"><label>لون التمييز الرئيسي (Global Primary)</label><input type="color"
+                            id="main_primary" style="height:45px; padding:5px;"></div>
+                </div>
+
+                <button class="btn-save" onclick="updateMainContent()">حفظ الإعدادات العامة</button>
+            </div>
+        </div>
+
+        <!-- Section: Cards -->
+        <div id="section-cards" class="section">
+            <h2 style="color: #fff; margin-bottom: 30px;">تعديل الأقسام الرئيسية (Feature Cards)</h2>
+
+            <!-- Card 1 -->
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-robot"></i> قسم البوت (Card 1)</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>العنوان</label><input type="text" id="c1_title"></div>
+                    <div class="form-group"><label>الوصف القصير</label><input type="text" id="c1_desc"></div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-users"></i> قسم الفريق (Card 2)</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>العنوان</label><input type="text" id="c2_title"></div>
+                    <div class="form-group"><label>الوصف القصير</label><input type="text" id="c2_desc"></div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-info-circle"></i> قسم التعريف (Card 3)</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>العنوان</label><input type="text" id="c3_title"></div>
+                    <div class="form-group"><label>الوصف القصير</label><input type="text" id="c3_desc"></div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-shopping-cart"></i> قسم المتجر (Card 4)</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>العنوان</label><input type="text" id="c4_title"></div>
+                    <div class="form-group"><label>الوصف القصير</label><input type="text" id="c4_desc"></div>
+                </div>
+            </div>
+
+            <button class="btn-save" onclick="updateMainContent()">حفظ البطاقات والكل</button>
+        </div>
+
+
+
+        <!-- Section: Bot Page -->
+        <div id="section-bot-page" class="section">
+            <h2 style="color: #fff; margin-bottom: 30px;">مركز التحكم في Antiko Bot</h2>
+
+            <div class="bot-dashboard">
+                <div class="card-admin">
+                    <div class="card-title"><i class="fas fa-cog"></i> الإعدادات الأساسية</div>
+                    <div class="form-group"><label>عنوان الصفحة الرئيسي</label><input type="text" id="bot_title"></div>
+                    <div class="form-group"><label>نص الهيرو (Hero Text)</label><textarea id="bot_hero"
+                            style="height:100px;"></textarea></div>
+                </div>
+
+                <div class="card-admin">
+                    <div class="card-title"><i class="fas fa-list"></i> مميزات البوت (Features)</div>
+                    <div class="grid-inputs" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group"><label>ميزة 1 - العنوان</label><input type="text" id="bot_f1t"></div>
+                        <div class="form-group"><label>ميزة 1 - الوصف</label><input type="text" id="bot_f1d"></div>
+                        <div class="form-group"><label>ميزة 2 - العنوان</label><input type="text" id="bot_f2t"></div>
+                        <div class="form-group"><label>ميزة 2 - الوصف</label><input type="text" id="bot_f2d"></div>
+                        <div class="form-group"><label>ميزة 3 - العنوان</label><input type="text" id="bot_f3t"></div>
+                        <div class="form-group"><label>ميزة 3 - الوصف</label><input type="text" id="bot_f3d"></div>
+                        <div class="form-group"><label>ميزة 4 - العنوان</label><input type="text" id="bot_f4t"></div>
+                        <div class="form-group"><label>ميزة 4 - الوصف</label><input type="text" id="bot_f4d"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveBotPage()">تحديث صفحة البوت</button>
+        </div>
+
+        <!-- Section: Team Page -->
+        <div id="section-team-page" class="section">
+            <h2 style="color: #fff; margin-bottom: 30px;">تعديل صفحة "عن الفريق"</h2>
+            <div class="card-admin">
+                <div class="form-group"><label>عنوان الصفحة الرئيسي</label><input type="text" id="team_title"></div>
+                <div class="form-group"><label>نص الهيرو (Hero Text)</label><input type="text" id="team_hero"></div>
+                <div class="card-admin" style="background: #111;">
+                    <label>الرؤية (Vision)</label>
+                    <input type="text" id="team_vh" placeholder="العنوان">
+                    <textarea id="team_vp" placeholder="النص"></textarea>
+                </div>
+                <div class="card-admin" style="background: #111;">
+                    <label>المهمة (Mission)</label>
+                    <input type="text" id="team_mh" placeholder="العنوان">
+                    <textarea id="team_mp" placeholder="النص"></textarea>
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveTeamPage()" style="margin-top:20px;">تحديث الصفحة</button>
+        </div>
+
+        <!-- Section: Members Page Tree Builder -->
+        <div id="section-members-page" class="section">
+            <h2 style="color: #fff; margin-bottom: 20px;">التحكم البصري في هيكل الفريق</h2>
+
+            <div class="card-admin" style="display:flex; flex-direction:column; gap:20px;">
+                <div class="tree-builder-workspace" id="tree-builder-workspace" style="height: 800px; width:100%;">
+                    <svg class="tree-canvas-svg" id="tree-canvas-svg">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#ff0033" />
+                            </marker>
+                        </defs>
+                    </svg>
+                    <!-- Draggable nodes will be injected here -->
+                </div>
+
+                <p style="color: #666; font-size: 0.8rem;">* اسحب المربعات لتحديد مكانها، واضغط على المربع لتعديل
+                    بياناته أو ربطه بمدير.</p>
+
+                <div id="node-editor" class="card-admin"
+                    style="display:none; background: #0a0a0a; border: 2px solid var(--primary); width:100%; margin-top:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3 style="color:var(--primary); margin:0;">تعديل بيانات: <span id="edit_display_name"
+                                style="color:#fff;"></span></h3>
+                        <button onclick="document.getElementById('node-editor').style.display='none'"
+                            style="background:none; border:none; color:#666; cursor:pointer;"><i
+                                class="fas fa-times"></i>
+                            إغلاق</button>
+                    </div>
+
+                    <input type="hidden" id="edit_m_id">
+
+                    <div class="grid-inputs" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="form-group"><label>الاسم</label><input type="text" id="edit_m_name"></div>
+                        <div class="form-group"><label>المنصب</label><input type="text" id="edit_m_role"></div>
+                        <div class="form-group"><label>المدير (Parent)</label>
+                            <select id="edit_m_parent"
+                                style="width:100%; background:#000; color:#fff; padding:10px; border:1px solid #444; border-radius:8px;">
+                                <option value="">بدون (رأس الشجرة)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-inputs" style="grid-template-columns: repeat(3, 1fr); margin-top:15px;">
+                        <div class="form-group"><label>لون التمييز (Hex)</label><input type="color" id="edit_m_color"
+                                style="height:45px; padding:5px;"></div>
+                        <div class="form-group"><label>رابط التواصل</label><input type="text" id="edit_m_link"
+                                placeholder="https://..."></div>
+                        <div class="form-group"><label>Discord ID</label><input type="text" id="edit_m_discord"
+                                placeholder="Username#0000"></div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:15px;"><label>النبذة الشخصية</label><textarea
+                            id="edit_m_bio" style="height:80px;"></textarea></div>
+
+                    <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
+                        <button class="btn-save" onclick="updateMemberNode()" style="margin:0; width:200px;">حفظ
+                            التغييرات</button>
+                        <button class="btn-save"
+                            onclick="deleteItem('members', document.getElementById('edit_m_id').value); document.getElementById('node-editor').style.display='none';"
+                            style="background:#330000; color:#ff4444; border:1px solid #ff4444; margin:0; width:150px;">حذف
+                            من الفريق</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-admin" style="margin-top:20px;">
+                <div class="card-title"><i class="fas fa-user-plus"></i> إضافة عضو جديد للقائمة</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>الاسم</label><input type="text" id="new_m_name"></div>
+                    <div class="form-group"><label>المنصب</label><input type="text" id="new_m_role"></div>
+                    <div class="form-group"><label>الأيقونة</label><input type="text" id="new_m_icon"
+                            value="fas fa-user">
+                    </div>
+                </div>
+                <button class="btn-save" onclick="addMember()" style="margin-top:15px;">إضافة عضو لقائمة
+                    السحب</button>
+            </div>
+
+
+        </div>
+
+
+        <!-- Section: Shop -->
+        <div id="section-shop" class="section">
+            <h2 style="color: #fff; margin-bottom: 30px;">إدارة المتجر</h2>
+
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>اسم المنتج</label><input type="text" id="new_p_name"></div>
+                    <div class="form-group"><label>السعر</label><input type="text" id="new_p_price"></div>
+                    <div class="form-group"><label>الوصف</label><input type="text" id="new_p_desc"></div>
+                    <div class="form-group"><label>الأيقونة (FontAwesome)</label><input type="text" id="new_p_icon"
+                            placeholder="fas fa-robot"></div>
+                </div>
+                <button class="btn-save" onclick="addProduct()">إضافة المنتج</button>
+            </div>
+
+            <h3 style="color:#fff; margin: 30px 0 15px;">قائمة المنتجات الحالية</h3>
+            <div id="products-list"></div>
+        </div>
+
+        <!-- Section: Files -->
+        <div id="section-files" class="section">
+            <h2 style="color: #fff; margin-bottom: 30px;">ملفات الموقع (Frontend Files)</h2>
+            <div class="card-admin">
+                <div class="card-title"><i class="fas fa-folder-open"></i> استعراض الملفات في مجلد /annn</div>
+                <div id="files-list-container"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                    <!-- Files injected here -->
+                </div>
+                <button class="btn-save" onclick="loadFiles()"
+                    style="margin-top: 30px; background: #333; color: #fff;"><i class="fas fa-sync"></i> تحديث
+                    القائمة</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="global-status" class="status-msg"
+        style="position: fixed; bottom: 30px; left: 30px; color: var(--primary);"></div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_bxTVPpSES36UHiaKoqBGBeI54ccwr2c",
+            authDomain: "antiko-cb40b.firebaseapp.com",
+            projectId: "antiko-cb40b",
+            storageBucket: "antiko-cb40b.firebasestorage.app",
+            messagingSenderId: "548565193060",
+            appId: "1:548565193060:web:8089850e62f323c052ea71"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Primary color sync for site and admin UI
+        onSnapshot(doc(db, "site_content", "styles"), (docSnap) => {
+            if (docSnap.exists()) {
+                const d = docSnap.data();
+                if (document.getElementById('main_primary')) document.getElementById('main_primary').value = d.primary || "#ff0033";
+                document.documentElement.style.setProperty('--primary', d.primary || "#ff0033");
+            }
+        });
+
+        // Main content sync (Logo, Footer, Cards)
+        onSnapshot(doc(db, "site_content", "main"), (snap) => {
+            if (snap.exists()) {
+                const d = snap.data();
+                if (document.getElementById('logo_text')) document.getElementById('logo_text').value = d.logo_text || "";
+                if (document.getElementById('footer_text')) document.getElementById('footer_text').value = d.footer || "";
+
+                if (document.getElementById('c1_title')) document.getElementById('c1_title').value = d.card1_title || "";
+                if (document.getElementById('c1_desc')) document.getElementById('c1_desc').value = d.card1_desc || "";
+                if (document.getElementById('c2_title')) document.getElementById('c2_title').value = d.card2_title || "";
+                if (document.getElementById('c2_desc')) document.getElementById('c2_desc').value = d.card2_desc || "";
+                if (document.getElementById('c3_title')) document.getElementById('c3_title').value = d.card3_title || "";
+                if (document.getElementById('c3_desc')) document.getElementById('c3_desc').value = d.card3_desc || "";
+                if (document.getElementById('c4_title')) document.getElementById('c4_title').value = d.card4_title || "";
+                if (document.getElementById('c4_desc')) document.getElementById('c4_desc').value = d.card4_desc || "";
+            }
+        });
+
+        // Shop items list
+        onSnapshot(query(collection(db, "products"), orderBy("createdAt", "asc")), (snapshot) => {
+            const list = document.getElementById('products-list');
+            list.innerHTML = '';
+            snapshot.forEach(doc => {
+                const p = doc.data();
+                const div = document.createElement('div');
+                div.className = 'card-admin';
+                div.style = 'background:#111; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;';
+                div.innerHTML = `
+                    <div>
+                        <strong style="color:var(--primary)">${p.name}</strong> - ${p.price} EGP
+                    </div>
+                    <div>
+                        <button class="btn-save" onclick="deleteItem('products', '${doc.id}')" style="background:#555; padding:5px 15px; margin:0;">حذف</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        // Static pages snapshot listeners...
+
+        // Static pages
+        onSnapshot(doc(db, "site_content", "bot_page"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                document.getElementById('bot_title').value = d.title || "";
+                document.getElementById('bot_hero').value = d.hero_text || "";
+                document.getElementById('bot_f1t').value = d.feat1_title || "";
+                document.getElementById('bot_f1d').value = d.feat1_desc || "";
+                document.getElementById('bot_f2t').value = d.feat2_title || "";
+                document.getElementById('bot_f2d').value = d.feat2_desc || "";
+                document.getElementById('bot_f3t').value = d.feat3_title || "";
+                document.getElementById('bot_f3d').value = d.feat3_desc || "";
+                document.getElementById('bot_f4t').value = d.feat4_title || "";
+                document.getElementById('bot_f4d').value = d.feat4_desc || "";
+            }
+        });
+        onSnapshot(doc(db, "site_content", "team_page"), (doc) => { if (doc.exists()) { const d = doc.data(); document.getElementById('team_title').value = d.title || ""; document.getElementById('team_hero').value = d.hero_text || ""; document.getElementById('team_vh').value = d.vision_h || ""; document.getElementById('team_vp').value = d.vision_p || ""; document.getElementById('team_mh').value = d.mission_h || ""; document.getElementById('team_mp').value = d.mission_p || ""; document.getElementById('team_sh').value = d.story_h || ""; document.getElementById('team_sp').value = d.story_p || ""; } });
+        onSnapshot(doc(db, "site_content", "members_page"), (doc) => { if (doc.exists()) { /* Member list handles itself */ } });
+        onSnapshot(doc(db, "site_content", "shop_page"), (doc) => { if (doc.exists()) { /* Shop list handles itself */ } });
+
+        // Members Tree Management
+        let membersData = [];
+        onSnapshot(collection(db, "members"), (snapshot) => {
+            membersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTreeWorkspace();
+            updateParentSelect();
+        });
+
+        function updateParentSelect() {
+            const select = document.getElementById('edit_m_parent');
+            const currentId = document.getElementById('edit_m_id').value;
+            select.innerHTML = '<option value="">بدون (رأس الشجرة)</option>';
+            membersData.filter(m => m.id !== currentId).forEach(m => {
+                select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+            });
+        }
+
+        function renderTreeWorkspace() {
+            const ws = document.getElementById('tree-builder-workspace');
+            const svg = document.getElementById('tree-canvas-svg');
+            const existingNodes = ws.querySelectorAll('.node-draggable');
+            existingNodes.forEach(n => n.remove());
+
+            membersData.forEach(m => {
+                const node = document.createElement('div');
+                node.className = 'node-draggable';
+                node.id = `node-${m.id}`;
+                node.style.left = (m.x || 50) + 'px';
+                node.style.top = (m.y || 50) + 'px';
+                node.innerHTML = `<strong>${m.name}</strong><br><small>${m.role}</small>`;
+
+                node.onmousedown = (e) => startDrag(e, m.id);
+                node.onclick = () => selectNode(m.id);
+                ws.appendChild(node);
+            });
+
+            drawTreeLines();
+        }
+
+        function drawTreeLines() {
+            const svg = document.getElementById('tree-canvas-svg');
+            // Keep defs if present
+            const defs = svg.querySelector('defs');
+            svg.innerHTML = '';
+            if (defs) svg.appendChild(defs);
+            else {
+                svg.innerHTML = `<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff0033" /></marker></defs>`;
+            }
+
+            membersData.forEach(m => {
+                if (m.parentId) {
+                    const parent = membersData.find(p => p.id === m.parentId);
+                    if (parent) {
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", (parent.x || 50) + 110);
+                        line.setAttribute("y1", (parent.y || 50) + 40);
+                        line.setAttribute("x2", (m.x || 50) + 110);
+                        line.setAttribute("y2", (m.y || 50) - 5);
+                        line.setAttribute("stroke", "#ff0033");
+                        line.setAttribute("stroke-width", "2");
+                        line.setAttribute("marker-end", "url(#arrowhead)");
+                        line.setAttribute("opacity", "0.8");
+                        svg.appendChild(line);
+                    }
+                }
+            });
+        }
+
+        let dragNodeId = null;
+        function startDrag(e, id) {
+            dragNodeId = id;
+            const node = document.getElementById(`node-${id}`);
+            const ws = document.getElementById('tree-builder-workspace');
+            const rect = ws.getBoundingClientRect();
+
+            function onMouseMove(moveEvent) {
+                if (!dragNodeId) return;
+                const x = moveEvent.clientX - rect.left - 110;
+                const y = moveEvent.clientY - rect.top - 20;
+                node.style.left = x + 'px';
+                node.style.top = y + 'px';
+
+                // Update local data for line drawing
+                const m = membersData.find(item => item.id === dragNodeId);
+                m.x = x; m.y = y;
+                drawTreeLines();
+            }
+
+            function onMouseUp() {
+                if (dragNodeId) {
+                    const m = membersData.find(item => item.id === dragNodeId);
+                    apiCall('PUT', `/members/${dragNodeId}`, { x: m.x, y: m.y });
+                }
+                dragNodeId = null;
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        window.selectNode = function (id) {
+            const m = membersData.find(item => item.id === id);
+            if (!m) return;
+            document.querySelectorAll('.node-draggable').forEach(n => n.classList.remove('active-node'));
+            document.getElementById(`node-${id}`).classList.add('active-node');
+
+            document.getElementById('node-editor').style.display = 'block';
+            document.getElementById('edit_m_id').value = id;
+            document.getElementById('edit_m_name').value = m.name;
+            document.getElementById('edit_display_name').innerText = m.name;
+            document.getElementById('edit_m_role').value = m.role;
+            document.getElementById('edit_m_bio').value = m.bio || "";
+            document.getElementById('edit_m_color').value = m.color || "#ff0033";
+            document.getElementById('edit_m_link').value = m.link || "";
+            document.getElementById('edit_m_discord').value = m.discord || "";
+
+            updateParentSelect();
+            document.getElementById('edit_m_parent').value = m.parentId || "";
+        }
+
+        window.updateMemberNode = async function () {
+            const id = document.getElementById('edit_m_id').value;
+            const data = {
+                name: document.getElementById('edit_m_name').value,
+                role: document.getElementById('edit_m_role').value,
+                bio: document.getElementById('edit_m_bio').value,
+                parentId: document.getElementById('edit_m_parent').value,
+                color: document.getElementById('edit_m_color').value,
+                link: document.getElementById('edit_m_link').value,
+                discord: document.getElementById('edit_m_discord').value
+            };
+            if (await apiCall('PUT', `/members/${id}`, data)) showStatus("✅ تم تحديث بيانات العضو");
+        }
+    </script>
+
+    <script>
+        // --- Rest of the Scripts ---
+        const API_URL = "http://localhost:5001";
+
+        window.loadFiles = async function () {
+            const container = document.getElementById('files-list-container');
+            container.innerHTML = '<p style="color:#888;">جاري تحميل الملفات...</p>';
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/admin/files`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const files = await res.json();
+
+                container.innerHTML = '';
+                files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'card-admin';
+                    div.style = 'margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; background: #111; border: 1px solid #222; cursor: pointer; transition: 0.3s;';
+                    div.onclick = () => !file.isDir && openFileEditor(file.name);
+
+                    const icon = file.isDir ? 'fa-folder' : 'fa-file-alt';
+                    const color = file.isDir ? '#ffbb33' : '#aaa';
+
+                    div.innerHTML = `
+                        <i class="fas ${icon}" style="font-size: 2rem; color: ${color}; margin-bottom: 10px;"></i>
+                        <span style="font-size: 0.9rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${file.name}</span>
+                        <span style="font-size: 0.7rem; color: #666; margin-top: 5px;">${file.size}</span>
+                        ${!file.isDir ? '<small style="color:var(--primary); margin-top:5px;">تعديل الكود</small>' : ''}
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                container.innerHTML = '<p style="color:var(--primary);">فشل تحميل الملفات</p>';
+            }
+        }
+
+        window.showSection = function (id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const target = document.getElementById('section-' + id);
+            if (target) target.classList.add('active');
+            if (event) event.currentTarget.classList.add('active');
+
+            if (id === 'files') loadFiles();
+        }
+
+        window.openFileEditor = async function (filename) {
+            const overlay = document.getElementById('editor-overlay');
+            const textarea = document.getElementById('code-textarea');
+            const title = document.getElementById('editing-filename');
+
+            title.innerText = "جاري التحميل: " + filename;
+            overlay.style.display = 'flex';
+            textarea.value = "";
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/admin/file-content?name=${filename}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    textarea.value = data.content;
+                    title.innerText = "تعديل: " + filename;
+                    textarea.dataset.filename = filename;
+                } else {
+                    alert("فشل تحميل الملف");
+                    closeEditor();
+                }
+            } catch (err) {
+                alert("خطأ في الاتصال");
+                closeEditor();
+            }
+        }
+
+        window.closeEditor = function () {
+            document.getElementById('editor-overlay').style.display = 'none';
+        }
+
+        window.saveFileContent = async function () {
+            const textarea = document.getElementById('code-textarea');
+            const filename = textarea.dataset.filename;
+            const content = textarea.value;
+
+            if (!filename) return;
+
+            showStatus("جاري الحفظ...");
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/admin/save-file`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: filename, content })
+                });
+
+                if (res.ok) {
+                    showStatus("✅ تم حفظ الملف بنجاح");
+                } else {
+                    showStatus("❌ فشل حفظ الملف", false);
+                }
+            } catch (err) {
+                showStatus("❌ خطأ بالاتصال", false);
+            }
+        }
+
+
+        window.apiCall = async function (method, endpoint, body) {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}${endpoint}`, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: body ? JSON.stringify(body) : null
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("API Error:", errData);
+                }
+                return res.ok;
+            } catch (err) {
+                console.error("Network Error:", err);
+                return false;
+            }
+        }
+
+        window.deleteItem = async function (coll, id) {
+            if (confirm("هل أنت متأكد من الحذف؟")) {
+                if (await apiCall('DELETE', `/${coll}/${id}`)) {
+                    showStatus("✅ تم الحذف بنجاح");
+                } else {
+                    showStatus("❌ فشل الحذف", false);
+                }
+            }
+        }
+
+        window.addProduct = async function () {
+            const data = {
+                name: document.getElementById('new_p_name').value,
+                price: document.getElementById('new_p_price').value,
+                description: document.getElementById('new_p_desc').value,
+                icon: document.getElementById('new_p_icon').value
+            };
+            if (!data.name || !data.price) {
+                showStatus("❌ يرجى إدخال اسم المنتج وسعره", false);
+                return;
+            }
+            if (await apiCall('POST', '/products', data)) {
+                showStatus("✅ تم إضافة المنتج");
+                // Clear fields
+                document.getElementById('new_p_name').value = "";
+                document.getElementById('new_p_price').value = "";
+                document.getElementById('new_p_desc').value = "";
+            } else {
+                showStatus("❌ فشل إضافة المنتج", false);
+            }
+        }
+
+        window.addMember = async function () {
+            const name = document.getElementById('new_m_name').value;
+            const role = document.getElementById('new_m_role').value;
+            const icon = document.getElementById('new_m_icon').value;
+            if (!name || !role) {
+                showStatus("❌ يرجى إدخال اسم العضو ومنصبه", false);
+                return;
+            }
+            const data = {
+                name,
+                role,
+                icon,
+                bio: "",
+                x: 250,
+                y: 50,
+                parentId: ""
+            };
+            if (await apiCall('POST', '/members', data)) {
+                showStatus("✅ تم إضافة العضو لقائمة السحب");
+                document.getElementById('new_m_name').value = "";
+                document.getElementById('new_m_role').value = "";
+            } else {
+                showStatus("❌ فشل إضافة العضو", false);
+            }
+        }
+
+        window.updateMainContent = async function () {
+            showStatus("جاري الحفظ...");
+            const generalData = {
+                logo_text: document.getElementById('logo_text').value,
+                footer: document.getElementById('footer_text').value,
+                card1_title: document.getElementById('c1_title').value,
+                card1_desc: document.getElementById('c1_desc').value,
+                card2_title: document.getElementById('c2_title').value,
+                card2_desc: document.getElementById('c2_desc').value,
+                card3_title: document.getElementById('c3_title').value,
+                card3_desc: document.getElementById('c3_desc').value,
+                card4_title: document.getElementById('c4_title').value,
+                card4_desc: document.getElementById('c4_desc').value
+            };
+            const styleData = {
+                primary: document.getElementById('main_primary').value
+            };
+            const r1 = await apiCall('PUT', '/site_content/main', generalData);
+            const r2 = await apiCall('PUT', '/site_content/styles', styleData);
+            if (r1 && r2) {
+                showStatus("✅ تم حفظ الإعدادات والبطاقات والمظهر");
+            } else {
+                showStatus("❌ فشل حفظ بعض الإعدادات - تأكد من اتصال الخادم", false);
+            }
+        }
+
+        window.saveBotPage = async function () {
+            showStatus("جاري الحفظ...");
+            const data = {
+                title: document.getElementById('bot_title').value,
+                hero_text: document.getElementById('bot_hero').value,
+                feat1_title: document.getElementById('bot_f1t').value,
+                feat1_desc: document.getElementById('bot_f1d').value,
+                feat2_title: document.getElementById('bot_f2t').value,
+                feat2_desc: document.getElementById('bot_f2d').value,
+                feat3_title: document.getElementById('bot_f3t').value,
+                feat3_desc: document.getElementById('bot_f3d').value,
+                feat4_title: document.getElementById('bot_f4t').value,
+                feat4_desc: document.getElementById('bot_f4d').value
+            };
+            if (await apiCall('PUT', '/site_content/bot_page', data)) {
+                showStatus("✅ تم تحديث صفحة البوت");
+            } else {
+                showStatus("❌ فشل تحديث صفحة البوت", false);
+            }
+        }
+
+        window.saveTeamPage = async function () {
+            showStatus("جاري الحفظ...");
+            const data = {
+                title: document.getElementById('team_title').value,
+                hero_text: document.getElementById('team_hero').value,
+                vision_h: document.getElementById('team_vh').value,
+                vision_p: document.getElementById('team_vp').value,
+                mission_h: document.getElementById('team_mh').value,
+                mission_p: document.getElementById('team_mp').value
+            };
+            if (await apiCall('PUT', '/site_content/team_page', data)) {
+                showStatus("✅ تم تحديث صفحة التعريف");
+            } else {
+                showStatus("❌ فشل تحديث صفحة التعريف", false);
+            }
+        }
+
+
+        window.doLogin = async function () {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const status = document.getElementById('login-status');
+            status.innerText = "Connecting...";
+            try {
+                const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
+                const data = await res.json();
+                if (res.ok) { localStorage.setItem('token', data.token); document.getElementById('login-overlay').style.display = 'none'; }
+                else { status.innerText = "FAILED: " + data.error; }
+            } catch (err) { status.innerText = "SERVER ERROR"; }
+        }
+
+        async function checkServerHealth() {
+            const pill = document.getElementById('server-status-pill');
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                if (res.ok) {
+                    pill.innerText = "Server: ONLINE";
+                    pill.style.color = "#4caf50";
+                    pill.style.borderColor = "#4caf50";
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                pill.innerText = "Server: OFFLINE";
+                pill.style.color = "#ff4444";
+                pill.style.borderColor = "#ff4444";
+            }
+        }
+        setInterval(checkServerHealth, 5000);
+        checkServerHealth();
+
+        function showStatus(msg, success = true) {
+            const s = document.getElementById('global-status');
+            if (!s) return;
+            s.innerText = msg;
+            s.style.color = success ? "#4caf50" : "#ff4444";
+            setTimeout(() => { if (s.innerText === msg) s.innerText = ""; }, 3000);
+        }
+
+        window.doLogout = function () { localStorage.removeItem('token'); location.reload(); }
+        if (localStorage.getItem('token')) document.getElementById('login-overlay').style.display = 'none';
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

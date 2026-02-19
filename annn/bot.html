@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antiko Team | Antiko Bot</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .feature-item {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: right;
+            transition: 0.3s;
+        }
+
+        .feature-item:hover {
+            transform: scale(1.02);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
+            background: rgba(255, 0, 51, 0.1);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-left: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 51, 0.2);
+        }
+
+        .bot-console {
+            background: #000;
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Consolas', monospace;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 0, 51, 0.1);
+        }
+
+        .bot-console::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: consoleScan 3s linear infinite;
+        }
+
+        @keyframes consoleScan {
+            0% {
+                top: 0;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        .console-text {
+            color: #00ff41;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: #00ff41;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <a href="index.html" class="back-btn" title="العودة للرئيسية" aria-label="العودة للرئيسية"><i
+            class="fas fa-arrow-right"></i></a>
+
+    <header>
+        <div id="p-title" class="logo-text staggered-entry">ANTIIKO BOT</div>
+        <div class="hero">
+            <h2 id="p-hero" class="staggered-entry">أذكى وأقوى بوت واتساب لإدارة المجموعات والترفيه</h2>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="bot-console staggered-entry">
+            <div class="console-text" id="console-output">
+                > Initializing Antiko OS... <br>
+                > Loading modules [Games, Guard, Tools]... <br>
+                > Connection established with WhatsApp Server. <br>
+                > System ready. <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container zebra-list">
+        <div class="feature-item staggered-entry">
+            <div class="feature-icon"><i class="fas fa-gamepad"></i></div>
+            <div class="feature-text">
+                <h3 id="f1-t">ألعاب ترفيهية متكاملة</h3>
+                <p id="f1-d">يحتوي البوت على مجموعة واسعة من الألعاب مثل (فكك، خمن، سؤال انمي، XO) مع نظام نقاط وتنافس.
+                </p>
+            </div>
+        </div>
+
+        <div class="feature-item staggered-entry">
+            <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="feature-text">
+                <h3 id="f2-t">نظام حماية وإدارة</h3>
+                <p id="f2-d">إدارة المجموعات باحترافية، طرد المتطفلين، ترحيب تلقائي، وضبط القوانين بسهولة.</p>
+            </div>
+        </div>
+
+        <div class="feature-item staggered-entry">
+            <div class="feature-icon"><i class="fas fa-tools"></i></div>
+            <div class="feature-text">
+                <h3 id="f3-t">أدوات ذكية</h3>
+                <p id="f3-d">تحويل الصور لملصقات، تحويل الفيديو لصوت، البحث في يوتيوب، ومعلومات الطقس والعملات.</p>
+            </div>
+        </div>
+
+        <div class="feature-item staggered-entry">
+            <div class="feature-icon"><i class="fas fa-university"></i></div>
+            <div class="feature-text">
+                <h3 id="f4-t">نظام البنك والترتيب</h3>
+                <p id="f4-d">اجمع النقاط، حوّل الأموال للاعبين الآخرين، ونافس لتكون الأول في قائمة الصدارة العالمية.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer-text">© 2026 Antiko Team. All Rights Reserved.</p>
+    </footer>
+
+
+    <script>
+        // Fun Console Typing Effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const consoleBox = document.getElementById('console-output');
+            const lines = [
+                "> Initializing Antiko OS...",
+                "> Loading modules [Games, Guard, Tools, AI]...",
+                "> Connecting to secure WhatsApp neural bridge...",
+                "> Integrity check: PASS [100%]",
+                "> System online. Waiting for commands..."
+            ];
+            let currentLine = 0;
+            let charIndex = 0;
+            consoleBox.innerHTML = "";
+
+            function typeNextChar() {
+                if (currentLine < lines.length) {
+                    if (charIndex < lines[currentLine].length) {
+                        consoleBox.innerHTML = lines.slice(0, currentLine).join("<br>") +
+                            (currentLine > 0 ? "<br>" : "") +
+                            lines[currentLine].substring(0, charIndex + 1) + "<span class='cursor'></span>";
+                        charIndex++;
+                        setTimeout(typeNextChar, 30 + Math.random() * 50);
+                    } else {
+                        currentLine++;
+                        charIndex = 0;
+                        setTimeout(typeNextChar, 500);
+                    }
+                }
+            }
+            typeNextChar();
+        });
+    </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_bxTVPpSES36UHiaKoqBGBeI54ccwr2c",
+            authDomain: "antiko-cb40b.firebaseapp.com",
+            projectId: "antiko-cb40b",
+            storageBucket: "antiko-cb40b.firebasestorage.app",
+            messagingSenderId: "548565193060",
+            appId: "1:548565193060:web:8089850e62f323c052ea71"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        window.db = db;
+        window.pageID = 'bot_page';
+        window.firebaseFirestore = { doc, onSnapshot };
+        window.firebaseAuth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithPopup = signInWithPopup;
+
+        onSnapshot(doc(db, "site_content", "bot_page"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.title) document.getElementById('p-title').innerText = d.title;
+                if (d.hero_text) document.getElementById('p-hero').innerText = d.hero_text;
+                if (d.feat1_title) document.getElementById('f1-t').innerText = d.feat1_title;
+                if (d.feat1_desc) document.getElementById('f1-d').innerText = d.feat1_desc;
+                if (d.feat2_title) document.getElementById('f2-t').innerText = d.feat2_title;
+                if (d.feat2_desc) document.getElementById('f2-d').innerText = d.feat2_desc;
+                if (d.feat3_title) document.getElementById('f3-t').innerText = d.feat3_title;
+                if (d.feat3_desc) document.getElementById('f3-d').innerText = d.feat3_desc;
+                if (d.feat4_title) document.getElementById('f4-t').innerText = d.feat4_title;
+                if (d.feat4_desc) document.getElementById('f4-d').innerText = d.feat4_desc;
+            }
+        });
+
+        // Footer update from main doc
+        onSnapshot(doc(db, "site_content", "main"), (doc) => {
+            if (doc.exists()) {
+                const d = doc.data();
+                if (d.footer) document.getElementById('footer-text').innerText = d.footer;
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>
