@@ -357,9 +357,8 @@ const initSoundEffect = () => {
         }
     }, { passive: true });
 };
-// --- Authentication and Modal Logic (Dynamic Injection) ---
-// --- Authentication and Modal Logic (Direct Firebase Integration) ---
-// Using Window Globals initialized in index.html (Firebase SDK)
+// --- Authentication and Modal Logic (Backend Proxy Mode) ---
+const API_BASE = "https://antiko-backend.koyeb.app"; // Placeholder, update after deployment
 
 const injectAuthUI = () => {
     if (document.getElementById('auth-modal')) return;
@@ -445,8 +444,22 @@ window.toggleAuthModal = async () => {
     modal.style.display = isOpening ? 'flex' : 'none';
 
     if (isOpening) {
+        const status = document.getElementById('auth-status');
         checkLoginStatus();
-        // Health check removed - we are using Direct Firebase SDK (Always Online if user has internet)
+
+        // Check backend health
+        try {
+            const healthRes = await fetch(`${API_BASE}/health`).catch(() => ({ ok: false }));
+            if (!healthRes.ok) {
+                status.innerText = "تنبيه: خادم الموقع (Backend) غير متصل حالياً";
+                status.style.color = "#ffbb33";
+            } else if (status.innerText.includes("غير متصل")) {
+                status.innerText = "";
+            }
+        } catch (e) {
+            status.innerText = "تنبيه: خادم الموقع (Backend) غير متصل حالياً";
+            status.style.color = "#ffbb33";
+        }
     }
 };
 
@@ -505,19 +518,27 @@ window.handleGoogleAuth = async () => {
     }
 
     try {
-        console.log("Starting Google Sign-In...");
+        console.log("Starting Google Sign-In via Firebase SDK...");
         const result = await window.signInWithPopup(window.firebaseAuth, window.googleProvider);
         const user = result.user;
         const idToken = await user.getIdToken();
 
-        const data = await res.json();
-        // Since we are moving to direct Firebase, we will determine role client-side based on admin email list
-        const adminEmails = ["admon257admin@gmail.com", "karemkoko257koko@gmail.com"];
-        const role = adminEmails.includes(user.email.toLowerCase()) ? 'admin' : 'user';
+        status.innerText = "جاري التأكد من البيانات بالخادم (Backend)...";
+        status.style.color = "var(--primary)";
 
-        localStorage.setItem('token', idToken);
-        localStorage.setItem('role', role);
-        console.log("Google Auth Success:", data);
+        const res = await fetch(`${API_BASE}/login-google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "الخادم رفض عملية الدخول");
+        }
+
+        const data = await res.json();
+        console.log("Google Auth Success via Backend:", data);
 
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', (data.role || 'user').toLowerCase());
@@ -575,48 +596,42 @@ window.handleAuth = async (type) => {
         return;
     }
 
-    status.innerText = "جاري الاتصال...";
+    status.innerText = "جاري الاتصال بالخادم...";
     status.style.color = "var(--primary)";
 
     try {
-        const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
-        const auth = getAuth();
+        const endpoint = type === 'login' ? '/login' : '/register';
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim(), password })
+        });
 
-        let userCredential;
-        if (type === 'login') {
-            userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        const data = await res.json();
+        if (res.ok) {
+            if (type === 'login') {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('role', (data.role || 'user').toLowerCase());
+                status.innerText = "تم الدخول بنجاح!";
+                status.style.color = "#4caf50";
+
+                setTimeout(() => {
+                    status.innerText = "";
+                    checkLoginStatus();
+                    toggleAuthModal();
+                }, 800);
+            } else {
+                status.innerText = "تم إنشاء الحساب! يمكنك الآن الدخول.";
+                status.style.color = "#4caf50";
+                switchAuthMode('login');
+            }
         } else {
-            userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-        }
-
-        const user = userCredential.user;
-        const idToken = await user.getIdToken();
-
-        if (type === 'login') {
-            const adminEmails = ["admon257admin@gmail.com", "karemkoko257koko@gmail.com"];
-            const role = adminEmails.includes(user.email.toLowerCase()) ? 'admin' : 'user';
-
-            localStorage.setItem('token', idToken);
-            localStorage.setItem('role', role);
-            status.innerText = "تم الدخول بنجاح!";
-            status.style.color = "#4caf50";
-
-            setTimeout(() => {
-                status.innerText = "";
-                checkLoginStatus();
-                toggleAuthModal();
-            }, 800);
-        } else {
-            status.innerText = "تم إنشاء الحساب! يمكنك الآن الدخول.";
-            status.style.color = "#4caf50";
-            switchAuthMode('login');
+            status.innerText = "خطأ: " + (data.error || "فشلت العملية");
+            status.style.color = "#ff4444";
         }
     } catch (err) {
-        console.error("Auth Error:", err);
-        let msg = "حدث خطأ في المصادقة";
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/user-disabled' || err.code === 'auth/invalid-credential') msg = "البريد الإلكتروني أو كلمة السر غير صحيحة";
-        if (err.code === 'auth/email-already-in-use') msg = "هذا البريد الإلكتروني مسجل بالفعل";
-        status.innerText = msg;
+        console.error("Backend Error:", err);
+        status.innerText = "خطأ في الاتصال بالخادم (Backend Offline)";
         status.style.color = "#ff4444";
     }
 };
