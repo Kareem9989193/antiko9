@@ -1132,12 +1132,10 @@
             const styleData = {
                 primary: document.getElementById('main_primary').value
             };
-            const r1 = await apiCall('PUT', '/site_content/main', generalData);
-            const r2 = await apiCall('PUT', '/site_content/styles', styleData);
-            if (r1 && r2) {
-                showStatus("✅ تم حفظ الإعدادات والبطاقات والمظهر");
-            } else {
-                showStatus("❌ فشل حفظ بعض الإعدادات - تأكد من اتصال الخادم", false);
+            if (await apiCall('PUT', '/site_content/main', generalData)) {
+                if (await apiCall('PUT', '/site_content/styles', styleData)) {
+                    showStatus("✅ تم حفظ الإعدادات والبطاقات والمظهر");
+                }
             }
         }
 
@@ -1157,8 +1155,6 @@
             };
             if (await apiCall('PUT', '/site_content/bot_page', data)) {
                 showStatus("✅ تم تحديث صفحة البوت");
-            } else {
-                showStatus("❌ فشل تحديث صفحة البوت", false);
             }
         }
 
@@ -1174,8 +1170,6 @@
             };
             if (await apiCall('PUT', '/site_content/team_page', data)) {
                 showStatus("✅ تم تحديث صفحة التعريف");
-            } else {
-                showStatus("❌ فشل تحديث صفحة التعريف", false);
             }
         }
 
