@@ -183,7 +183,8 @@ app.post('/:collection', verifyToken, verifyAdmin, async (req, res) => {
         });
         res.json({ message: 'Added successfully', id: docRef.id });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to add item' });
+        console.error(`Add Item Error [${collection}]:`, error);
+        res.status(500).json({ error: `Failed to add item: ${error.message}` });
     }
 });
 
@@ -207,7 +208,8 @@ app.delete('/:collection/:id', verifyToken, verifyAdmin, async (req, res) => {
         await db.collection(collection).doc(id).delete();
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to delete item' });
+        console.error(`Delete Error [${collection}/${id}]:`, error);
+        res.status(500).json({ error: `Failed to delete: ${error.message}` });
     }
 });
 
