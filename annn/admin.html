@@ -29,26 +29,33 @@
         /* Sidebar Style */
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(15, 5, 5, 0.95);
+            background: rgba(10, 5, 5, 0.98);
             border-left: 2px solid var(--primary);
             display: flex;
             flex-direction: column;
             padding: 20px 0;
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-            z-index: 100;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
+            z-index: 1000;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
             overflow-x: hidden;
             flex-shrink: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
         }
 
         .sidebar::-webkit-scrollbar {
-            width: 4px;
+            width: 6px;
         }
 
         .sidebar::-webkit-scrollbar-thumb {
             background: var(--primary);
             border-radius: 10px;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .sidebar-header {
@@ -245,20 +252,29 @@
         .node-draggable {
             position: absolute;
             width: 220px;
-            background: rgba(10, 5, 5, 0.95);
-            border: 1px solid var(--primary);
-            border-radius: 10px;
+            background: rgba(15, 5, 5, 0.95);
+            border: 2px solid #333;
+            border-radius: 12px;
             padding: 15px;
             cursor: move;
             z-index: 10;
             user-select: none;
             text-align: center;
             color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            touch-action: none;
+            /* Crucial for mobile dragging */
+        }
+
+        .node-draggable:hover {
+            border-color: var(--primary);
         }
 
         .node-draggable.active-node {
-            box-shadow: 0 0 15px var(--primary-glow);
-            border-width: 2px;
+            box-shadow: 0 0 20px var(--primary-glow);
+            border-color: var(--primary);
+            z-index: 100;
         }
 
         .tree-canvas-svg {
@@ -294,7 +310,7 @@
                 right: -100%;
                 top: 0;
                 height: 100vh;
-                width: 250px !important;
+                width: 280px !important;
                 background: #0a0a0a;
                 border-left: 2px solid var(--primary);
             }
@@ -304,7 +320,7 @@
             }
 
             .main-content {
-                padding: 80px 15px 20px;
+                padding: 80px 10px 20px;
             }
 
             .grid-inputs {
@@ -312,36 +328,25 @@
             }
 
             .card-admin {
-                padding: 20px;
-            }
-
-            .nav-text {
-                display: inline;
-            }
-
-            .sidebar-header {
-                display: block;
-            }
-
-            .nav-item {
-                justify-content: flex-start;
-                padding: 15px 25px;
+                padding: 15px;
             }
 
             .tree-builder-workspace {
-                height: 400px !important;
+                height: 600px !important;
+                min-height: 400px;
                 overflow: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .node-draggable {
-                width: 140px;
-                padding: 8px;
-                font-size: 0.75rem;
+                width: 180px;
+                padding: 12px;
+                font-size: 0.85rem;
             }
 
             .tree-canvas-svg {
-                width: 1500px;
-                height: 1500px;
+                width: 2500px;
+                height: 2500px;
             }
 
             #node-editor .grid-inputs {
@@ -832,17 +837,21 @@
                 node.innerHTML = `<strong>${m.name}</strong><br><small>${m.role}</small>`;
 
                 node.onmousedown = (e) => startDrag(e, m.id);
-                node.ontouchstart = (e) => startDrag(e, m.id);
+                node.ontouchstart = (e) => {
+                    // Prevent page scroll when starting drag on mobile
+                    // e.preventDefault(); 
+                    startDrag(e, m.id);
+                };
                 node.onclick = () => selectNode(m.id);
                 ws.appendChild(node);
             });
 
-            drawTreeLines();
+            // Delay line drawing to allow DOM to calculate node sizes
+            setTimeout(drawTreeLines, 100);
         }
 
         function drawTreeLines() {
             const svg = document.getElementById('tree-canvas-svg');
-            // Keep defs if present
             const defs = svg.querySelector('defs');
             svg.innerHTML = '';
             if (defs) svg.appendChild(defs);
@@ -877,23 +886,29 @@
         }
 
         let dragNodeId = null;
+        let initialX, initialY, initialMouseX, initialMouseY;
+
         function startDrag(e, id) {
             dragNodeId = id;
             const node = document.getElementById(`node-${id}`);
             const ws = document.getElementById('tree-builder-workspace');
             const rect = ws.getBoundingClientRect();
 
-            function getPointerPos(event) {
-                const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-                const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-                return { x: clientX, y: clientY };
-            }
+            const pointer = e.touches ? e.touches[0] : e;
+            initialMouseX = pointer.clientX;
+            initialMouseY = pointer.clientY;
+            initialX = parseFloat(node.style.left) || 0;
+            initialY = parseFloat(node.style.top) || 0;
 
             function onMove(moveEvent) {
                 if (!dragNodeId) return;
-                const pos = getPointerPos(moveEvent);
-                const x = pos.x - rect.left + ws.scrollLeft - (node.offsetWidth / 2);
-                const y = pos.y - rect.top + ws.scrollTop - (node.offsetHeight / 2);
+                const p = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+
+                const dx = p.clientX - initialMouseX;
+                const dy = p.clientY - initialMouseY;
+
+                const x = initialX + dx;
+                const y = initialY + dy;
 
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
@@ -903,7 +918,6 @@
                 m.x = x; m.y = y;
                 drawTreeLines();
 
-                // Prevent scrolling when dragging on mobile
                 if (moveEvent.cancelable) moveEvent.preventDefault();
             }
 
