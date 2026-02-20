@@ -358,7 +358,7 @@ const initSoundEffect = () => {
     }, { passive: true });
 };
 // --- Authentication and Modal Logic (Backend Proxy Mode) ---
-const API_BASE = "https://antiko-backend.koyeb.app"; // Placeholder, update after deployment
+const API_BASE = "https://antiko9.vercel.app";
 
 const injectAuthUI = () => {
     if (document.getElementById('auth-modal')) return;
