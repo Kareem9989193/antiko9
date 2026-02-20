@@ -14,8 +14,9 @@ const PORT = process.env.PORT || 5000;
 const serviceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    // Replace escaped newlines if present
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"(.*)"$/, '$1')
+        : undefined,
 };
 
 if (!admin.apps.length) {
@@ -221,7 +222,8 @@ app.put('/:collection/:id', verifyToken, verifyAdmin, async (req, res) => {
         }, { merge: true });
         res.json({ message: 'Updated successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to update' });
+        console.error(`Update Error [${collection}/${id}]:`, error);
+        res.status(500).json({ error: `Failed to update: ${error.message}` });
     }
 });
 
