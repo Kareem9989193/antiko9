@@ -37,6 +37,18 @@
             box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
             z-index: 100;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
 
         .sidebar-header {
@@ -317,14 +329,23 @@
             }
 
             .tree-builder-workspace {
-                height: 500px !important;
+                height: 400px !important;
                 overflow: auto;
             }
 
             .node-draggable {
-                width: 160px;
-                padding: 10px;
-                font-size: 0.8rem;
+                width: 140px;
+                padding: 8px;
+                font-size: 0.75rem;
+            }
+
+            .tree-canvas-svg {
+                width: 1500px;
+                height: 1500px;
+            }
+
+            #node-editor .grid-inputs {
+                grid-template-columns: 1fr !important;
             }
         }
 
@@ -811,6 +832,7 @@
                 node.innerHTML = `<strong>${m.name}</strong><br><small>${m.role}</small>`;
 
                 node.onmousedown = (e) => startDrag(e, m.id);
+                node.ontouchstart = (e) => startDrag(e, m.id);
                 node.onclick = () => selectNode(m.id);
                 ws.appendChild(node);
             });
@@ -831,11 +853,18 @@
             membersData.forEach(m => {
                 if (m.parentId) {
                     const parent = membersData.find(p => p.id === m.parentId);
-                    if (parent) {
+                    const parentNode = document.getElementById(`node-${parent?.id}`);
+                    const memberNode = document.getElementById(`node-${m.id}`);
+
+                    if (parent && parentNode && memberNode) {
+                        const pWidth = parentNode.offsetWidth;
+                        const pHeight = parentNode.offsetHeight;
+                        const mWidth = memberNode.offsetWidth;
+
                         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        line.setAttribute("x1", (parent.x || 50) + 110);
-                        line.setAttribute("y1", (parent.y || 50) + 40);
-                        line.setAttribute("x2", (m.x || 50) + 110);
+                        line.setAttribute("x1", (parent.x || 50) + (pWidth / 2));
+                        line.setAttribute("y1", (parent.y || 50) + pHeight);
+                        line.setAttribute("x2", (m.x || 50) + (mWidth / 2));
                         line.setAttribute("y2", (m.y || 50) - 5);
                         line.setAttribute("stroke", "#ff0033");
                         line.setAttribute("stroke-width", "2");
@@ -854,10 +883,18 @@
             const ws = document.getElementById('tree-builder-workspace');
             const rect = ws.getBoundingClientRect();
 
-            function onMouseMove(moveEvent) {
+            function getPointerPos(event) {
+                const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                return { x: clientX, y: clientY };
+            }
+
+            function onMove(moveEvent) {
                 if (!dragNodeId) return;
-                const x = moveEvent.clientX - rect.left + ws.scrollLeft - 110;
-                const y = moveEvent.clientY - rect.top + ws.scrollTop - 20;
+                const pos = getPointerPos(moveEvent);
+                const x = pos.x - rect.left + ws.scrollLeft - (node.offsetWidth / 2);
+                const y = pos.y - rect.top + ws.scrollTop - (node.offsetHeight / 2);
+
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
 
@@ -865,20 +902,27 @@
                 const m = membersData.find(item => item.id === dragNodeId);
                 m.x = x; m.y = y;
                 drawTreeLines();
+
+                // Prevent scrolling when dragging on mobile
+                if (moveEvent.cancelable) moveEvent.preventDefault();
             }
 
-            function onMouseUp() {
+            function onEnd() {
                 if (dragNodeId) {
                     const m = membersData.find(item => item.id === dragNodeId);
-                    apiCall('PUT', `/members/${dragNodeId}`, { x: m.x, y: m.y });
+                    apiCall('PUT', `/members/${dragNodeId}`, { x: Math.round(m.x), y: Math.round(m.y) });
                 }
                 dragNodeId = null;
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onEnd);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
             }
 
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
         }
 
         window.selectNode = function (id) {
