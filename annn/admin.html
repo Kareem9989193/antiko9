@@ -23,6 +23,7 @@
 
         * {
             font-family: 'Tajawal', sans-serif !important;
+            box-sizing: border-box;
         }
 
         /* Sidebar Style */
@@ -35,6 +36,7 @@
             padding: 20px 0;
             box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
             z-index: 100;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sidebar-header {
@@ -66,12 +68,31 @@
             border-right-color: var(--primary);
         }
 
+        /* Mobile Menu Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            background: var(--primary);
+            color: #000;
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 0, 51, 0.3);
+        }
+
         /* Main Content */
         .main-content {
             flex-grow: 1;
             padding: 40px;
             overflow-y: auto;
             background: radial-gradient(circle at center, #111 0%, #050505 100%);
+            transition: 0.3s;
         }
 
         .section {
@@ -203,7 +224,7 @@
             border: 2px dashed #333;
             border-radius: 15px;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
             margin-top: 20px;
             background-image: radial-gradient(#222 1px, transparent 1px);
             background-size: 30px 30px;
@@ -232,8 +253,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 2000px;
+            height: 2000px;
             pointer-events: none;
         }
 
@@ -252,22 +273,58 @@
 
         /* Responsive */
         @media (max-width: 900px) {
+            .mobile-toggle {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                right: -100%;
+                top: 0;
+                height: 100vh;
+                width: 250px !important;
+                background: #0a0a0a;
+                border-left: 2px solid var(--primary);
+            }
+
+            .sidebar.mobile-active {
+                right: 0;
+            }
+
+            .main-content {
+                padding: 80px 15px 20px;
+            }
+
             .grid-inputs {
                 grid-template-columns: 1fr;
             }
 
-            .sidebar {
-                width: 80px;
+            .card-admin {
+                padding: 20px;
             }
 
-            .sidebar-header,
             .nav-text {
-                display: none;
+                display: inline;
+            }
+
+            .sidebar-header {
+                display: block;
             }
 
             .nav-item {
-                justify-content: center;
-                padding: 20px 0;
+                justify-content: flex-start;
+                padding: 15px 25px;
+            }
+
+            .tree-builder-workspace {
+                height: 500px !important;
+                overflow: auto;
+            }
+
+            .node-draggable {
+                width: 160px;
+                padding: 10px;
+                font-size: 0.8rem;
             }
         }
 
@@ -330,6 +387,11 @@
 </head>
 
 <body>
+    <!-- Mobile Toggle -->
+    <div class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+
     <!-- Login Screen -->
     <div id="login-overlay">
         <div class="login-box">
@@ -790,8 +852,8 @@
 
             function onMouseMove(moveEvent) {
                 if (!dragNodeId) return;
-                const x = moveEvent.clientX - rect.left - 110;
-                const y = moveEvent.clientY - rect.top - 20;
+                const x = moveEvent.clientX - rect.left + ws.scrollLeft - 110;
+                const y = moveEvent.clientY - rect.top + ws.scrollTop - 20;
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
 
@@ -852,7 +914,11 @@
 
     <script>
         // --- Rest of the Scripts ---
-        const API_URL = "http://localhost:5001";
+        const API_URL = "https://antiko9.vercel.app";
+
+        window.toggleSidebar = function () {
+            document.querySelector('.sidebar').classList.toggle('mobile-active');
+        }
 
         window.loadFiles = async function () {
             const container = document.getElementById('files-list-container');

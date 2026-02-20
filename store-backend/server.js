@@ -226,6 +226,25 @@ app.put('/:collection/:id', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 const fs = require('fs');
+// 9. List Files (Protected)
+app.get('/admin/files', verifyToken, verifyAdmin, async (req, res) => {
+    try {
+        const folderPath = path.join(__dirname, '../annn');
+        const files = fs.readdirSync(folderPath);
+        const result = files.map(file => {
+            const stats = fs.statSync(path.join(folderPath, file));
+            return {
+                name: file,
+                isDir: stats.isDirectory(),
+                size: stats.size < 1024 ? stats.size + ' B' : (stats.size / 1024).toFixed(1) + ' KB'
+            };
+        });
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to list files' });
+    }
+});
+
 const path = require('path');
 
 // 10. Get File Content (Protected)
