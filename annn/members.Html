@@ -8,35 +8,39 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .tree-container {
-            width: 3000px;
-            height: 2000px;
+        .tree-viewport {
+            width: 100%;
+            height: 800px;
+            overflow: auto;
             position: relative;
-            margin: 50px 0;
-            overflow: visible;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 51, 0.1);
+            border-radius: 15px;
+            -webkit-overflow-scrolling: touch;
+            z-index: 100;
         }
 
-        .container {
-            max-width: 100%;
-            overflow: auto;
-            padding-bottom: 50px;
-            -webkit-overflow-scrolling: touch;
+        .tree-container {
+            width: 4000px;
+            /* Large space for tree nodes */
+            height: 3000px;
+            position: relative;
+            overflow: visible;
         }
 
         .tree-node {
             position: absolute;
-            transition: transform 0.3s ease;
-            z-index: 10;
+            z-index: 1000;
         }
 
         .tree-svg {
             position: absolute;
             top: 0;
             left: 0;
-            width: 3000px;
-            height: 2000px;
+            width: 4000px;
+            height: 3000px;
             pointer-events: none;
-            z-index: 5;
+            z-index: 50;
         }
 
         .member-card {
@@ -57,26 +61,8 @@
         }
 
         @media (max-width: 768px) {
-            .container {
-                overflow-x: auto;
-                padding-bottom: 30px;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .tree-container {
-                width: 3000px;
-                /* Allow space for the tree */
-                height: 1200px;
-                margin: 20px 0;
-                transform: scale(0.9);
-                /* Subtle scale down for smaller screens */
-                transform-origin: top left;
-            }
-
-            .tree-svg {
-                width: 3000px;
-                height: 1200px;
-                display: block !important;
+            .tree-viewport {
+                height: 600px;
             }
         }
     </style>
@@ -95,10 +81,12 @@
         </div>
     </header>
 
-    <div class="container">
-        <div id="tree-container" class="tree-container">
-            <svg id="tree-svg" class="tree-svg"></svg>
-            <!-- Nodes injected here -->
+    <div class="container" style="max-width: 100%; padding: 0 10px;">
+        <div class="tree-viewport">
+            <div id="tree-container" class="tree-container">
+                <svg id="tree-svg" class="tree-svg"></svg>
+                <!-- Nodes injected here -->
+            </div>
         </div>
     </div>
 
@@ -158,35 +146,33 @@
             `;
 
             // First Render Member Cards
-            snapshot.forEach(doc => {
-                const m = { id: doc.id, ...doc.data() };
+            members.forEach(m => {
                 const node = document.createElement('div');
-                node.className = 'tree-node staggered-entry';
+                node.className = 'tree-node';
                 node.id = `node-${m.id}`;
-                node.style.left = (m.x || 0) + 'px';
-                node.style.top = (m.y || 0) + 'px';
+                node.style.left = (m.x || 100) + 'px';
+                node.style.top = (m.y || 100) + 'px';
 
                 const cardColor = m.color || "#ff0033";
 
                 node.innerHTML = `
                     <div class="member-card" style="border-color: ${cardColor}; box-shadow: 0 0 15px ${cardColor}33;">
                         <div class="member-avatar" style="color: ${cardColor};"><i class="${m.icon || 'fas fa-user'}"></i></div>
-                        <div class="member-name">${m.name}</div>
-                        <div class="member-role" style="color: ${cardColor};">${m.role}</div>
-                        ${m.bio ? `<p class="member-bio">${m.bio}</p>` : ''}
+                        <div class="member-name" style="color:#fff; font-weight:bold;">${m.name}</div>
+                        <div class="member-role" style="color: ${cardColor}; font-size:0.9rem;">${m.role}</div>
+                        ${m.bio ? `<p class="member-bio" style="font-size:0.75rem; opacity:0.8; margin-top:5px;">${m.bio}</p>` : ''}
                         
                         <div class="member-socials" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-                            ${m.link ? `<a href="${m.link}" target="_blank" style="color:${cardColor}; font-size:1.2rem;"><i class="fas fa-external-link-alt"></i></a>` : ''}
-                            ${m.discord ? `<a href="#" title="${m.discord}" style="color:${cardColor}; font-size:1.2rem;" onclick="event.preventDefault(); alert('Discord ID: ${m.discord}')"><i class="fab fa-discord"></i></a>` : ''}
+                            ${m.link ? `<a href="${m.link}" target="_blank" style="color:${cardColor}; font-size:1.1rem;"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                            ${m.discord ? `<a href="#" title="${m.discord}" style="color:${cardColor}; font-size:1.1rem;" onclick="event.preventDefault(); alert('Discord ID: ${m.discord}')"><i class="fab fa-discord"></i></a>` : ''}
                         </div>
                     </div>
                 `;
                 container.appendChild(node);
             });
 
-            // Draw Lines with delay
+            // Draw Lines with delay to ensure DOM is ready
             setTimeout(() => {
-                const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 members.forEach(m => {
                     if (m.parentId) {
                         const parent = members.find(p => p.id === m.parentId);
@@ -199,10 +185,10 @@
                             const mWidth = memberNode.offsetWidth;
 
                             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                            line.setAttribute("x1", (parent.x || 0) + (pWidth / 2));
-                            line.setAttribute("y1", (parent.y || 0) + pHeight);
-                            line.setAttribute("x2", (m.x || 0) + (mWidth / 2));
-                            line.setAttribute("y2", (m.y || 0) - 5);
+                            line.setAttribute("x1", (parent.x || 100) + (pWidth / 2));
+                            line.setAttribute("y1", (parent.y || 100) + pHeight);
+                            line.setAttribute("x2", (m.x || 100) + (mWidth / 2));
+                            line.setAttribute("y2", (m.y || 100) - 5);
                             line.setAttribute("stroke", parent.color || "#ff0033");
                             line.setAttribute("stroke-width", "2");
                             line.setAttribute("marker-end", "url(#arrowhead)");
@@ -211,7 +197,7 @@
                         }
                     }
                 });
-            }, 200);
+            }, 300);
         });
 
         onSnapshot(doc(db, "site_content", "main"), (doc) => {
