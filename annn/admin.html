@@ -29,19 +29,20 @@
         /* Sidebar Style */
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(10, 5, 5, 0.98);
+            background: rgba(8, 5, 5, 0.98);
             border-left: 2px solid var(--primary);
             display: flex;
             flex-direction: column;
             padding: 20px 0;
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
-            z-index: 1000;
+            box-shadow: 10px 0 40px rgba(0, 0, 0, 0.9);
+            z-index: 2000;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
             overflow-x: hidden;
             flex-shrink: 0;
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
-            scrollbar-color: var(--primary) transparent;
+            scrollbar-color: var(--primary) rgba(0, 0, 0, 0.5);
         }
 
         .sidebar::-webkit-scrollbar {
@@ -309,14 +310,18 @@
                 position: fixed;
                 right: -100%;
                 top: 0;
-                height: 100vh;
+                bottom: 0;
+                height: 100%;
                 width: 280px !important;
-                background: #0a0a0a;
+                background: #050505;
                 border-left: 2px solid var(--primary);
+                padding-bottom: 80px;
+                /* Space for the last items */
             }
 
             .sidebar.mobile-active {
                 right: 0;
+                box-shadow: -10px 0 50px rgba(0, 0, 0, 1);
             }
 
             .main-content {
@@ -332,10 +337,12 @@
             }
 
             .tree-builder-workspace {
-                height: 600px !important;
+                height: 500px !important;
                 min-height: 400px;
                 overflow: auto;
                 -webkit-overflow-scrolling: touch;
+                border: 1px solid #222;
+                background-size: 20px 20px;
             }
 
             .node-draggable {
@@ -612,8 +619,14 @@
                     <!-- Draggable nodes will be injected here -->
                 </div>
 
-                <p style="color: #666; font-size: 0.8rem;">* اسحب المربعات لتحديد مكانها، واضغط على المربع لتعديل
-                    بياناته أو ربطه بمدير.</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-save" onclick="autoReposition()"
+                        style="background: #222; color: #fff; font-size: 0.8rem; margin: 0;">
+                        <i class="fas fa-magic"></i> إعادة ترتيب تلقائي للهيكل
+                    </button>
+                    <p style="color: #666; font-size: 0.8rem; margin: auto 0;">* اسحب المربعات لتحديد مكانها، واضغط على
+                        المربع لتعديل بياناته.</p>
+                </div>
 
                 <div id="node-editor" class="card-admin"
                     style="display:none; background: #0a0a0a; border: 2px solid var(--primary); width:100%; margin-top:0;">
@@ -907,11 +920,12 @@
                 const dx = p.clientX - initialMouseX;
                 const dy = p.clientY - initialMouseY;
 
-                const x = initialX + dx;
-                const y = initialY + dy;
+                const x = Math.max(10, initialX + dx);
+                const y = Math.max(10, initialY + dy);
 
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
+                node.style.zIndex = 10000;
 
                 // Update local data for line drawing
                 const m = membersData.find(item => item.id === dragNodeId);
@@ -923,6 +937,8 @@
 
             function onEnd() {
                 if (dragNodeId) {
+                    const node = document.getElementById(`node-${dragNodeId}`);
+                    node.style.zIndex = "";
                     const m = membersData.find(item => item.id === dragNodeId);
                     apiCall('PUT', `/members/${dragNodeId}`, { x: Math.round(m.x), y: Math.round(m.y) });
                 }
@@ -972,6 +988,22 @@
             };
             if (await apiCall('PUT', `/members/${id}`, data)) showStatus("✅ تم تحديث بيانات العضو");
         }
+
+        window.autoReposition = async function () {
+            if (!confirm("سيتم إعادة ترتيب المربعات في شبكة منظمة، هل أنت متأكد؟")) return;
+            showStatus("جاري إعادة الترتيب...");
+
+            const gapX = 250;
+            const gapY = 150;
+            const perRow = 3;
+
+            for (let i = 0; i < membersData.length; i++) {
+                const x = 50 + (i % perRow) * gapX;
+                const y = 50 + Math.floor(i / perRow) * gapY;
+                await apiCall('PUT', `/members/${membersData[i].id}`, { x, y });
+            }
+            showStatus("✅ تم إعادة الترتيب بنجاح");
+        }
     </script>
 
     <script>
@@ -979,7 +1011,15 @@
         const API_URL = "https://antiko9.vercel.app";
 
         window.toggleSidebar = function () {
-            document.querySelector('.sidebar').classList.toggle('mobile-active');
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('mobile-active');
+
+            // Prevent body scroll when sidebar is open on mobile
+            if (sidebar.classList.contains('mobile-active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
         }
 
         window.loadFiles = async function () {
