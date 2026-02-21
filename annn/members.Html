@@ -9,11 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .tree-container {
-            width: 100%;
-            height: 800px;
+            width: 3000px;
+            height: 2000px;
             position: relative;
             margin: 50px 0;
             overflow: visible;
+        }
+
+        .container {
+            max-width: 100%;
+            overflow: auto;
+            padding-bottom: 50px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tree-node {
@@ -26,8 +33,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 3000px;
+            height: 2000px;
             pointer-events: none;
             z-index: 5;
         }
@@ -50,20 +57,26 @@
         }
 
         @media (max-width: 768px) {
-            .tree-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                height: auto;
-                gap: 30px;
+            .container {
+                overflow-x: auto;
+                padding-bottom: 30px;
+                -webkit-overflow-scrolling: touch;
             }
 
-            .tree-node {
-                position: static !important;
+            .tree-container {
+                width: 3000px;
+                /* Allow space for the tree */
+                height: 1200px;
+                margin: 20px 0;
+                transform: scale(0.9);
+                /* Subtle scale down for smaller screens */
+                transform-origin: top left;
             }
 
             .tree-svg {
-                display: none;
+                width: 3000px;
+                height: 1200px;
+                display: block !important;
             }
         }
     </style>
@@ -144,29 +157,12 @@
                 </defs>
             `;
 
-            // Draw Lines
-            members.forEach(m => {
-                if (m.parentId) {
-                    const parent = members.find(p => p.id === m.parentId);
-                    if (parent) {
-                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        line.setAttribute("x1", (parent.x || 0) + 110);
-                        line.setAttribute("y1", (parent.y || 0) + 60);
-                        line.setAttribute("x2", (m.x || 0) + 110);
-                        line.setAttribute("y2", (m.y || 0) - 5);
-                        line.setAttribute("stroke", parent.color || "#ff0033");
-                        line.setAttribute("stroke-width", "2");
-                        line.setAttribute("marker-end", "url(#arrowhead)");
-                        line.setAttribute("opacity", "0.6");
-                        svg.appendChild(line);
-                    }
-                }
-            });
-
-            // Render Member Cards
-            members.forEach(m => {
+            // First Render Member Cards
+            snapshot.forEach(doc => {
+                const m = { id: doc.id, ...doc.data() };
                 const node = document.createElement('div');
                 node.className = 'tree-node staggered-entry';
+                node.id = `node-${m.id}`;
                 node.style.left = (m.x || 0) + 'px';
                 node.style.top = (m.y || 0) + 'px';
 
@@ -187,6 +183,35 @@
                 `;
                 container.appendChild(node);
             });
+
+            // Draw Lines with delay
+            setTimeout(() => {
+                const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                members.forEach(m => {
+                    if (m.parentId) {
+                        const parent = members.find(p => p.id === m.parentId);
+                        const parentNode = document.getElementById(`node-${parent?.id}`);
+                        const memberNode = document.getElementById(`node-${m.id}`);
+
+                        if (parent && parentNode && memberNode) {
+                            const pWidth = parentNode.offsetWidth;
+                            const pHeight = parentNode.offsetHeight;
+                            const mWidth = memberNode.offsetWidth;
+
+                            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                            line.setAttribute("x1", (parent.x || 0) + (pWidth / 2));
+                            line.setAttribute("y1", (parent.y || 0) + pHeight);
+                            line.setAttribute("x2", (m.x || 0) + (mWidth / 2));
+                            line.setAttribute("y2", (m.y || 0) - 5);
+                            line.setAttribute("stroke", parent.color || "#ff0033");
+                            line.setAttribute("stroke-width", "2");
+                            line.setAttribute("marker-end", "url(#arrowhead)");
+                            line.setAttribute("opacity", "0.6");
+                            svg.appendChild(line);
+                        }
+                    }
+                });
+            }, 200);
         });
 
         onSnapshot(doc(db, "site_content", "main"), (doc) => {
