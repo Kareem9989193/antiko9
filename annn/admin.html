@@ -22,8 +22,16 @@
         }
 
         * {
-            font-family: 'Tajawal', sans-serif !important;
             box-sizing: border-box;
+        }
+
+        body,
+        input,
+        button,
+        select,
+        textarea,
+        .nav-text {
+            font-family: 'Tajawal', sans-serif;
         }
 
         /* Sidebar Style */
@@ -94,7 +102,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 1100;
+            z-index: 3000;
             background: var(--primary);
             color: #000;
             width: 45px;
@@ -1012,13 +1020,16 @@
 
         window.toggleSidebar = function () {
             const sidebar = document.querySelector('.sidebar');
+            const toggleIcon = document.querySelector('.mobile-toggle i');
             sidebar.classList.toggle('mobile-active');
 
             // Prevent body scroll when sidebar is open on mobile
             if (sidebar.classList.contains('mobile-active')) {
                 document.body.style.overflow = 'hidden';
+                if (toggleIcon) toggleIcon.className = 'fas fa-times';
             } else {
                 document.body.style.overflow = 'auto';
+                if (toggleIcon) toggleIcon.className = 'fas fa-bars';
             }
         }
 
@@ -1061,9 +1072,15 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             const target = document.getElementById('section-' + id);
             if (target) target.classList.add('active');
-            if (event) event.currentTarget.classList.add('active');
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
 
             if (id === 'files') loadFiles();
+
+            // Auto-close sidebar on mobile after selecting a section
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('mobile-active')) {
+                toggleSidebar();
+            }
         }
 
         window.openFileEditor = async function (filename) {
@@ -1098,6 +1115,14 @@
         window.closeEditor = function () {
             document.getElementById('editor-overlay').style.display = 'none';
         }
+
+        // Close sidebar when clicking on main content on mobile
+        document.querySelector('.main-content').addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('mobile-active')) {
+                toggleSidebar();
+            }
+        });
 
         window.saveFileContent = async function () {
             const textarea = document.getElementById('code-textarea');
